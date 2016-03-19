@@ -7,6 +7,7 @@
 THREE.BlendLoader = function(manager) {
   this.manager = (manager !== undefined) ? manager : THREE.DefaultLoadingManager;
   this.data = 0;
+  this.pointerSize = 64; // Default to 64 bit pointer size, because who uses 32 bit anyway?
 }
 
 THREE.BlendLoader.prototype = new THREE.Loader();
@@ -24,21 +25,6 @@ THREE.BlendLoader.prototype.load = function(url, onLoad, onProgress, onError) {
     if (typeof onLoad == "function")
       onLoad(result);
   }, onProgress, onError);
-
-  /*var xhttp = new XMLHttpRequest()
-  xhttp.open("GET", url, true);
-  xhttp.responseType = "arraybuffer";
-
-  xhttp.onreadystatechange = function() {
-    if (xhttp.readyState == 4 && xhttp.status == 200) {
-      scope.parse(xhttp.response);
-    } else if (xhttp.readyState == 4) {
-      console.error(".blend loader XHTTP status: " + xhttp.readyState + ", " + xhttp.status);
-      return false;
-    }
-  }
-
-  xhttp.send();*/
 }
 
 // Called once the XMLHttpRequest finishes doing its thing
@@ -51,15 +37,15 @@ THREE.BlendLoader.prototype.parse = function(inData) {
   var isCompressed = !checkHeader(responseView);
 
   if (isCompressed) {
-    console.log(".blend is compressed, now decompressing");
+    console.log(".blend is either invalid or compressed, attempting decompression");
 
     try {
-      console.time(".blend decompression");
+      console.time(".blend decompression time");
       var gunzip = new Zlib.Gunzip(responseView);
       this.data = gunzip.decompress();
     } catch (err) {
       console.warn("Supplied URL is either malformed or is not a .blend file");
-      console.timeEnd(".blend decompression");
+      console.timeEnd(".blend decompression time");
       console.error(err);
       return false;
     }
@@ -68,10 +54,10 @@ THREE.BlendLoader.prototype.parse = function(inData) {
 
     if (isActuallyBlend) {
       console.log(".blend file successfully decompressed and validated");
-      console.timeEnd(".blend decompression");
+      console.timeEnd(".blend decompression time");
     } else {
       console.warn("Supplied URL was gzipped, but is not a .blend file");
-      console.timeEnd(".blend decompression");
+      console.timeEnd(".blend decompression time");
       return false;
     }
   } else {
@@ -81,13 +67,13 @@ THREE.BlendLoader.prototype.parse = function(inData) {
 
   // Returns true if the first 7 bytes of the supplied data spell BLENDER
   function checkHeader(data) {
-    return data[0] == 66 &&
-           data[1] == 76 &&
-           data[2] == 69 &&
-           data[3] == 78 &&
-           data[4] == 68 &&
-           data[5] == 69 &&
-           data[6] == 82;
+    return data[0] == 0x42 &&
+           data[1] == 0x4C &&
+           data[2] == 0x45 &&
+           data[3] == 0x4E &&
+           data[4] == 0x44 &&
+           data[5] == 0x45 &&
+           data[6] == 0x52;
   }
 }
 
