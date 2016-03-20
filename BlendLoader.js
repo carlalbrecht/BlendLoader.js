@@ -3,11 +3,15 @@
  */
 
 (function(){
+"use strict"
 
-THREE.BlendLoader = function(manager) {
+THREE.BlendLoader = function(manager, verbose) {
   this.manager = (manager !== undefined) ? manager : THREE.DefaultLoadingManager;
+  this.verbose = (verbose !== undefined) ? verbose : false;
   this.data = 0;
   this.pointerSize = 64; // Default to 64 bit pointer size, because who uses 32 bit anyway?
+  this.endianness = 0;   // 0 for little endian, 1 for big endian
+  this.version = "";     // Represents the version of Blender the file was made in
 }
 
 THREE.BlendLoader.prototype = new THREE.Loader();
@@ -27,25 +31,25 @@ THREE.BlendLoader.prototype.load = function(url, onLoad, onProgress, onError) {
   }, onProgress, onError);
 }
 
-// Called once the XMLHttpRequest finishes doing its thing
+// Called once the XMLHttpRequest finishes, this function processes the header, then moves along
 // The data argument should be of type Uint8Array, otherwise, expect bad things to happen
 THREE.BlendLoader.prototype.parse = function(inData) {
   var responseView = new Uint8Array(inData);
 
-  console.log("Checking to see if the .blend is gzipped");
+  if (this.verbose) console.log("Checking to see if the .blend is gzipped");
 
   var isCompressed = !checkHeader(responseView);
 
   if (isCompressed) {
-    console.log(".blend is either invalid or compressed, attempting decompression");
+    if (this.verbose) console.log(".blend is either invalid or compressed, attempting decompression");
 
     try {
-      console.time(".blend decompression time");
+      if (this.verbose) console.time(".blend decompression time");
       var gunzip = new Zlib.Gunzip(responseView);
       this.data = gunzip.decompress();
     } catch (err) {
-      console.warn("Supplied URL is either malformed or is not a .blend file");
-      console.timeEnd(".blend decompression time");
+      console.error("Supplied URL is either malformed or is not a .blend file");
+      if (this.verbose) console.timeEnd(".blend decompression time");
       console.error(err);
       return false;
     }
@@ -53,17 +57,36 @@ THREE.BlendLoader.prototype.parse = function(inData) {
     var isActuallyBlend = checkHeader(this.data);
 
     if (isActuallyBlend) {
-      console.log(".blend file successfully decompressed and validated");
-      console.timeEnd(".blend decompression time");
+      if (this.verbose) console.log(".blend file successfully decompressed and validated");
+      if (this.verbose) console.timeEnd(".blend decompression time");
     } else {
-      console.warn("Supplied URL was gzipped, but is not a .blend file");
-      console.timeEnd(".blend decompression time");
+      console.error("Supplied URL was gzipped, but is not a .blend file");
+      if (this.verbose) console.timeEnd(".blend decompression time");
       return false;
     }
   } else {
     this.data = responseView;
-    console.log(".blend is not compressed, continuing");
+    if (this.verbose) console.log(".blend is not compressed, continuing");
   }
+
+  if (this.data[7] == 0x5F) {
+    this.pointerSize = 32; // 32 bit pointers are in use in this file
+    if (this.verbose) console.log("Using 32-bit pointers");
+  } else {
+    this.pointerSize = 64; // Just in case I accidentally change the default...
+    if (this.verbose) console.log("Using 64-bit pointers");
+  }
+
+  if (this.data[8] == 0x56) {
+    this.endianness = 1;   // This file is big endian
+    if (this.verbose) console.log("Values are big-endian");
+  } else {
+    this.endianness = 0;   // justincase
+    if (this.verbose) console.log("Values are little-endian");
+  }
+
+  this.version = String.fromCharCode(this.data[9]) + "." + String.fromCharCode(this.data[10]) + "." + String.fromCharCode(this.data[11]);
+  if (this.verbose) console.log("This .blend file was created in Blender " + this.version);
 
   // Returns true if the first 7 bytes of the supplied data spell BLENDER
   function checkHeader(data) {
