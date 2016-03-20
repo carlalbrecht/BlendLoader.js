@@ -1,18 +1,16 @@
-/**
- * @author Carl Albrecht / http://thesynapse.github.io/
- */
-
 (function(){
-"use strict"
+"use strict";
 
 THREE.BlendLoader = function(manager, verbose) {
   this.manager = (manager !== undefined) ? manager : THREE.DefaultLoadingManager;
   this.verbose = (verbose !== undefined) ? verbose : false;
   this.data = 0;
-  this.pointerSize = 64; // Default to 64 bit pointer size, because who uses 32 bit anyway?
-  this.endianness = 0;   // 0 for little endian, 1 for big endian
-  this.version = "";     // Represents the version of Blender the file was made in
-}
+  this.pointerSize = 64;   // Default to 64 bit pointer size, because who uses 32 bit anyway?
+  this.endianness = 0;     // 0 for little endian, 1 for big endian
+  this.version = "";       // Represents the version of Blender the file was made in
+  this.compressed = false; // Is set to true if we encounter a compressed file
+  this.valid = false;      // Set to true if the checkHeader function returns true
+};
 
 THREE.BlendLoader.prototype = new THREE.Loader();
 THREE.BlendLoader.prototype.constructor = THREE.BlendLoader;
@@ -25,11 +23,11 @@ THREE.BlendLoader.prototype.load = function(url, onLoad, onProgress, onError) {
   loader.setResponseType("arraybuffer");
   loader.setPath(this.path);
   loader.load(url, function(data) {
-    var result = scope.parse(data)
+    var result = scope.parse(data);
     if (typeof onLoad == "function")
       onLoad(result);
   }, onProgress, onError);
-}
+};
 
 // Called once the XMLHttpRequest finishes, this function processes the header, then moves along
 // The data argument should be of type Uint8Array, otherwise, expect bad things to happen
@@ -38,9 +36,9 @@ THREE.BlendLoader.prototype.parse = function(inData) {
 
   if (this.verbose) console.log("Checking to see if the .blend is gzipped");
 
-  var isCompressed = !checkHeader(responseView);
+  self.compressed = !checkHeader(responseView);
 
-  if (isCompressed) {
+  if (self.compressed) {
     if (this.verbose) console.log(".blend is either invalid or compressed, attempting decompression");
 
     try {
@@ -54,9 +52,9 @@ THREE.BlendLoader.prototype.parse = function(inData) {
       return false;
     }
 
-    var isActuallyBlend = checkHeader(this.data);
+    this.valid = checkHeader(this.data);
 
-    if (isActuallyBlend) {
+    if (this.valid) {
       if (this.verbose) console.log(".blend file successfully decompressed and validated");
       if (this.verbose) console.timeEnd(".blend decompression time");
     } else {
@@ -66,6 +64,7 @@ THREE.BlendLoader.prototype.parse = function(inData) {
     }
   } else {
     this.data = responseView;
+    this.valid = true; // We know this is valid because of the compression check above
     if (this.verbose) console.log(".blend is not compressed, continuing");
   }
 
@@ -98,10 +97,10 @@ THREE.BlendLoader.prototype.parse = function(inData) {
            data[5] == 0x45 &&
            data[6] == 0x52;
   }
-}
+};
 
 // I dont actually know what this is used for, but I will put it here just to conform
 THREE.BlendLoader.prototype.setPath = function(value) {
   this.path = value;
-}
+};
 })();
