@@ -4,7 +4,8 @@ module.exports = function(grunt) {
     pkg: grunt.file.readJSON('package.json'),
     concat: {
       options: {
-        separator: ';'
+        separator: ';',
+        sourceMap: true
       },
       dist: {
         src: ['src/**/*.js'],
@@ -29,7 +30,6 @@ module.exports = function(grunt) {
       options: {
         // options here to override JSHint defaults
         globals: {
-          jQuery: true,
           console: true,
           module: true,
           document: true
