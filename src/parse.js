@@ -102,7 +102,7 @@ THREE.BlendLoader.prototype.parseHeader = function(responseView) {
   }
 
   // Obtain version of Blender the file was made in
-  this.version = String.fromCharCode(this.data[9]) + "." + String.fromCharCode(this.data[10]) + "." + String.fromCharCode(this.data[11]);
+  this.version = String.fromCharCode(this.data[9]) + "." + String.fromCharCode(this.data[10]) + String.fromCharCode(this.data[11]);
   if (this.verbose) console.log("This .blend file was created in Blender " + this.version);
 
   return true;
@@ -122,5 +122,13 @@ function checkHeader(data) {
          data[4] == THREE.BlendLoader.constants.header.d &&
          data[5] == THREE.BlendLoader.constants.header.e &&
          data[6] == THREE.BlendLoader.constants.header.r;
+}
+
+// Returns the input number with its endianness flipped. i.e. little endian -> big endian
+function switchEndian(val) {
+    return ((val & 0xFF) << 24)
+           | ((val & 0xFF00) << 8)
+           | ((val >> 8) & 0xFF00)
+           | ((val >> 24) & 0xFF);
 }
 })();
