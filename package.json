@@ -1,6 +1,11 @@
 {
   "name": "BlendLoader",
   "version": "0.1.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/theSynapse/BlendLoader.js.git"
+  },
   "devDependencies": {
     "grunt": "latest",
     "grunt-contrib-uglify": "latest",
