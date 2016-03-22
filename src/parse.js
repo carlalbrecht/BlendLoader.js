@@ -172,10 +172,15 @@ function bInt16(b1, b2, endianness) {
     ret = (b2 << 8) + b1; // Little endian
   }
 
-  // Calculate signedness
-  if (ret >> 7) ret = -ret;
+  // Calculate whether or not to make number negative
+  var negative = ret >> 7;
 
-  // Remove sign bit and return
-  return ret & 0b01111111;
+  // Remove sign bit
+  ret &= 0b0111111111111111;
+
+  // Make number negative as determined above
+  if (negative) ret = -ret;
+
+  return ret;
 }
 })();
