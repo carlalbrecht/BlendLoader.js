@@ -108,7 +108,7 @@ THREE.BlendLoader.prototype.parseHeader = function(responseView) {
   return true;
 };
 
-// Called by parse to process the Structured DNA records
+// Called by parse to process the Structure DNA records
 THREE.BlendLoader.prototype.parseSDNA = function(responseView) {
   return true;
 };
@@ -130,5 +130,52 @@ function switchEndian(val) {
            | ((val & 0xFF00) << 8)
            | ((val >> 8) & 0xFF00)
            | ((val >> 24) & 0xFF);
+}
+
+// The following functions return the input bytes converted to a
+// Javascript type with respect to endianness. They each take
+// a clearly defined number of bytes as input.
+
+function bUInt32(b1, b2, b3, b4, endianness) {
+  if (endianness) {
+                    // Includes free unsigned int hack (>>> 0)
+    return ((b1 << 24) >>> 0) + (b2 << 16) + (b3 << 8) + b4; // Big endian
+  } else {
+                    // Also includes free unsigned int hack
+    return ((b4 << 24) >>> 0) + (b3 << 16) + (b2 << 8) + b1; // Little endian
+  }
+}
+
+function bInt32(b1, b2, b3, b4, endianness) {
+  if (endianness) {
+    return (b1 << 24) + (b2 << 16) + (b3 << 8) + b4; // Big endian
+  } else {
+    return (b4 << 24) + (b3 << 16) + (b2 << 8) + b1; // Little endian
+  }
+}
+
+function bUInt16(b1, b2, endianness) {
+  if (endianness) {
+    return (b1 << 8) + b2; // Big endian
+  } else {
+    return (b2 << 8) + b1; // Little endian
+  }
+}
+
+// I really *really* feel like this function could be rewritten better.
+function bInt16(b1, b2, endianness) {
+  var ret = 0;
+
+  if (endianness) {
+    ret = (b1 << 8) + b2; // Big endian
+  } else {
+    ret = (b2 << 8) + b1; // Little endian
+  }
+
+  // Calculate signedness
+  if (ret >> 7) ret = -ret;
+
+  // Remove sign bit and return
+  return ret & 0b01111111;
 }
 })();
