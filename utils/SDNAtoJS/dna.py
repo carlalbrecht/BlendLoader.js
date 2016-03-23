@@ -563,11 +563,11 @@ class DNAField:
       else:
         handle.write(",\n    \"" + self.Name.AsReference(parentReference) + "\": {")
 
-      handle.write("structure: \"" + structure.Type.Name + "\"")
-      handle.write(", type: \"" + self.Type.Name + "\"")
-      handle.write(", name: \"" + self.Name.Name + "\"")
-      handle.write(", offset: " + str(offset))
-      handle.write(", size: " + str(self.Size(catalog.Header)))
+      handle.write("s: \"" + structure.Type.Name + "\"")             # structure
+      handle.write(", t: \"" + self.Type.Name + "\"")                # type
+      handle.write(", n: \"" + self.Name.Name + "\"")                # name
+      handle.write(", o: " + str(offset))                            # offset
+      handle.write(", l: " + str(self.Size(catalog.Header)))         # size (length)
 
       handle.write("}")
     else:
