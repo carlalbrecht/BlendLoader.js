@@ -45,6 +45,9 @@ THREE.BlendLoader = function(manager, verbose) {
 THREE.BlendLoader.prototype = new THREE.Loader();
 THREE.BlendLoader.prototype.constructor = THREE.BlendLoader;
 
+// Arrays
+THREE.BlendLoader.SDNA = {};
+
 // Conventional function that serves as the general interface for loading .blend files
 THREE.BlendLoader.prototype.load = function(url, onLoad, onProgress, onError) {
   var scope = this;
