@@ -3,17 +3,19 @@
 #    dna.py
 #      
 #  Description:
-#    creates a browsable DNA output to HTML.
+#    creates an SDNA struct dump into JS objects.
 #       
 #  Author:
-#    Jeroen Bakker
+#    Jeroen Bakker, modifications Carl Albrecht
 #        
 #  Version:
 #    v0.1 (12-05-2009) - migration of original source code to python.
 #       Added code to support blender 2.5 branch
+#    v1.0 (01-01-1970) - modified code to dump to JS objects instead
+#       of HTML tables.
 #        
 #  Input:
-#    blender build executable
+#    Sample .blend file from target blender version (currently using 2.76b)
 #        
 #  Output:
 #    dna.html

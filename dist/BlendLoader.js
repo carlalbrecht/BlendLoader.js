@@ -227,7 +227,7 @@ THREE.BlendLoader.prototype.parseHeader = function(responseView) {
   return true;
 };
 
-// Called by parse to process the Structured DNA records
+// Called by parse to process the Structure DNA records
 THREE.BlendLoader.prototype.parseSDNA = function(responseView) {
   return true;
 };
@@ -250,6 +250,95 @@ function switchEndian(val) {
            | ((val >> 8) & 0xFF00)
            | ((val >> 24) & 0xFF);
 }
-})();
 
+// The following functions return the input bytes converted to a
+// Javascript type with respect to endianness. They each take
+// a clearly defined number of bytes as input.
+
+function bUInt32(b1, b2, b3, b4, endianness) {
+  if (endianness) {
+                    // Includes free unsigned int hack (>>> 0)
+    return ((b1 << 24) >>> 0) + (b2 << 16) + (b3 << 8) + b4; // Big endian
+  } else {
+                    // Also includes free unsigned int hack
+    return ((b4 << 24) >>> 0) + (b3 << 16) + (b2 << 8) + b1; // Little endian
+  }
+}
+
+function bInt32(b1, b2, b3, b4, endianness) {
+  if (endianness) {
+    return (b1 << 24) + (b2 << 16) + (b3 << 8) + b4; // Big endian
+  } else {
+    return (b4 << 24) + (b3 << 16) + (b2 << 8) + b1; // Little endian
+  }
+}
+
+function bUInt16(b1, b2, endianness) {
+  if (endianness) {
+    return (b1 << 8) + b2; // Big endian
+  } else {
+    return (b2 << 8) + b1; // Little endian
+  }
+}
+
+// I really *really* feel like this function could be rewritten better.
+function bInt16(b1, b2, endianness) {
+  var ret = 0;
+
+  if (endianness) {
+    ret = (b1 << 8) + b2; // Big endian
+  } else {
+    ret = (b2 << 8) + b1; // Little endian
+  }
+
+  // Calculate whether or not to make number negative
+  var negative = ret >> 7;
+
+  // Remove sign bit
+  ret &= ~(1 << 15);
+
+  // Make number negative as determined above
+  if (negative) ret = -ret;
+
+  return ret;
+}
+})();
+;/*
+The MIT License (MIT)
+Copyright (c) 2016 Carl Albrecht
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+(function(){
+"use strict";
+
+// I thought this would be longer.
+THREE.BlendLoader.SDNA.types = {
+  void: 0,
+  char: 1,
+  short: 2,
+  int: 3,
+  long: 4,
+  float: 5,
+  double: 6,
+  charArray: 7,
+  pointer: 1337
+};
+})();
 //# sourceMappingURL=BlendLoader.js.map

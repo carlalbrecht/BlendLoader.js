@@ -176,7 +176,7 @@ function bInt16(b1, b2, endianness) {
   var negative = ret >> 7;
 
   // Remove sign bit
-  ret &= 0b0111111111111111;
+  ret &= ~(1 << 15);
 
   // Make number negative as determined above
   if (negative) ret = -ret;
