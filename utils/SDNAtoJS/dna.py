@@ -504,7 +504,7 @@ class DNAStructure:
     jsIsFirstField = True
 
     for field in self.Fields:
-      field.WriteToJS(catalog, self, parentReference, offset, handle)
+      offset += field.WriteToJS(catalog, self, parentReference, offset, handle)
     
 ######################################################
 #    DNAField is a coupled DNAType and DNAName
@@ -574,10 +574,13 @@ class DNAField:
       if self.Type.Structure <> None:
         reference = self.Name.AsReference(parentReference)
         self.Type.Structure.WriteFieldsToJS(catalog, reference, offset, handle)
+
+    return self.Size(catalog.Header)
   
   def Size(self, header):
     if self.Name.IsPointer() or self.Name.IsMethodPointer():
-      return header.PointerSize*self.Name.ArraySize()
+      #return header.PointerSize*self.Name.ArraySize()
+      return 0 # indicates that the current entry is a pointer
     else:
       return self.Type.Size*self.Name.ArraySize()
 
