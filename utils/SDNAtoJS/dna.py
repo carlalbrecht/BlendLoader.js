@@ -6,7 +6,7 @@
 #    creates an SDNA struct dump into JS objects.
 #       
 #  Author:
-#    Jeroen Bakker, modifications Carl Albrecht
+#    Jeroen Bakker, JS exporter modifications Carl Albrecht
 #        
 #  Version:
 #    v0.1 (12-05-2009) - migration of original source code to python.
@@ -609,10 +609,12 @@ if os.path.exists(Filename_Blend):
 
 #seek to dna1 file block
   print("3: seek DNA1 file-block")
+  headerAmt = 1
   block = FileBlockHeader(handle, Header)
   while block.Code != "DNA1":
     block.skip(handle)
     block = FileBlockHeader(handle, Header)
+    headerAmt += 1
   
 #read dna record from blend file
   print("4: read DNA1 file-block")
@@ -648,6 +650,9 @@ if os.path.exists(Filename_Blend):
   print("7: quit blender")
   if Blender <> None:
     Blender.Quit()
+
+  print("\nAdditional File information:")
+  print(str(headerAmt) + " file block(s) were encountered in this file")
   
 else:
   print("Filename "+Filename_Blend+" does not exists")

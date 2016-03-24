@@ -39,6 +39,7 @@ THREE.BlendLoader = function(manager, verbose) {
   this.version = "";       // Represents the version of Blender the file was made in
   this.compressed = false; // Is set to true if we encounter a compressed file
   this.valid = false;      // Set to true if the checkHeader function returns true
+  this.filePointer = 0;    // When reading a file, this moves around
 };
 
 // We extend THREE classes wherever possible to make our lives easier
@@ -227,12 +228,113 @@ THREE.BlendLoader.prototype.parseHeader = function(responseView) {
   this.version = String.fromCharCode(this.data[9]) + "." + String.fromCharCode(this.data[10]) + String.fromCharCode(this.data[11]);
   if (this.verbose) console.log("This .blend file was created in Blender " + this.version);
 
+  // Fake us "moving the pointer around" as we read, because lazyness
+  this.filePointer = 12;
+
   return true;
 };
 
 // Called by parse to process the Structure DNA records
-THREE.BlendLoader.prototype.parseSDNA = function(responseView) {
+THREE.BlendLoader.prototype.parseSDNA = function() {
   return true;
+};
+
+// Reads the header of a file block to get the valuable info inside
+THREE.BlendLoader.prototype.blockHeader = function() {
+  return {
+    code: this.bReadString(4),
+    size: this.bReadUInt(this.endianness),
+    oldAddress: this.bReadNumString(this.pointerSize / 8, this.endianness),
+    SDNAIndex: this.bReadUInt(this.endianness),
+    count: this.bReadUInt(this.endianness)
+  };
+};
+
+// The following functions return the input bytes converted to a
+// Javascript type with respect to endianness. They each take
+// a clearly defined number of bytes as input.
+
+THREE.BlendLoader.prototype.bReadUInt = function(endianness) {
+  var oldPointer = this.filePointer;
+  this.filePointer += 4;
+
+  if (endianness) { // Big Endian
+    return ((this.data[oldPointer] << 24) >>> 0) +
+            (this.data[oldPointer + 1] << 16) +
+            (this.data[oldPointer + 2] << 8) +
+             this.data[oldPointer + 3];
+  } else { // Little Endian
+    return ((this.data[oldPointer + 3] << 24) >>> 0) +
+            (this.data[oldPointer + 2] << 16) +
+            (this.data[oldPointer + 1] << 8) +
+             this.data[oldPointer];
+  }
+};
+
+THREE.BlendLoader.prototype.bReadInt = function(b1, b2, b3, b4, endianness) {
+  if (endianness) {
+    return (b1 << 24) + (b2 << 16) + (b3 << 8) + b4; // Big endian
+  } else {
+    return (b4 << 24) + (b3 << 16) + (b2 << 8) + b1; // Little endian
+  }
+};
+
+THREE.BlendLoader.prototype.bReadUShort = function(b1, b2, endianness) {
+  if (endianness) {
+    return (b1 << 8) + b2; // Big endian
+  } else {
+    return (b2 << 8) + b1; // Little endian
+  }
+};
+
+// I really *really* feel like this function could be rewritten better.
+THREE.BlendLoader.prototype.bReadShort = function(b1, b2, endianness) {
+  var ret = 0;
+
+  if (endianness) {
+    ret = (b1 << 8) + b2; // Big endian
+  } else {
+    ret = (b2 << 8) + b1; // Little endian
+  }
+
+  // Calculate whether or not to make number negative
+  var negative = ret >> 7;
+
+  // Remove sign bit
+  ret &= ~(1 << 15);
+
+  // Make number negative as determined above
+  if (negative) ret = -ret;
+
+  return ret;
+};
+
+THREE.BlendLoader.prototype.bReadString = function(chars) {
+  var _return = "";
+
+  for (var i=0; i < chars; i++) {
+    _return += String.fromCharCode(this.data[this.filePointer]);
+    this.filePointer++;
+  }
+
+  return _return;
+};
+
+THREE.BlendLoader.prototype.bReadNumString = function(bytes, endianness) {
+  var _return = "";
+
+  if (endianness) {
+    for (var i=0; i < bytes; i++) {
+      _return += this.data[this.filePointer + i].toString(16);
+    }
+  } else {
+    for (var j=bytes-1; j >= 0; j--) { // Have to use J to satisfy JSHint
+      _return += this.data[this.filePointer + j].toString(16);
+    }
+  }
+
+  this.filePointer += bytes;
+  return _return;
 };
 
 // Returns true if the first 7 bytes of the supplied data spell BLENDER
@@ -252,58 +354,6 @@ function switchEndian(val) {
            | ((val & 0xFF00) << 8)
            | ((val >> 8) & 0xFF00)
            | ((val >> 24) & 0xFF);
-}
-
-// The following functions return the input bytes converted to a
-// Javascript type with respect to endianness. They each take
-// a clearly defined number of bytes as input.
-
-function bUInt32(b1, b2, b3, b4, endianness) {
-  if (endianness) {
-                    // Includes free unsigned int hack (>>> 0)
-    return ((b1 << 24) >>> 0) + (b2 << 16) + (b3 << 8) + b4; // Big endian
-  } else {
-                    // Also includes free unsigned int hack
-    return ((b4 << 24) >>> 0) + (b3 << 16) + (b2 << 8) + b1; // Little endian
-  }
-}
-
-function bInt32(b1, b2, b3, b4, endianness) {
-  if (endianness) {
-    return (b1 << 24) + (b2 << 16) + (b3 << 8) + b4; // Big endian
-  } else {
-    return (b4 << 24) + (b3 << 16) + (b2 << 8) + b1; // Little endian
-  }
-}
-
-function bUInt16(b1, b2, endianness) {
-  if (endianness) {
-    return (b1 << 8) + b2; // Big endian
-  } else {
-    return (b2 << 8) + b1; // Little endian
-  }
-}
-
-// I really *really* feel like this function could be rewritten better.
-function bInt16(b1, b2, endianness) {
-  var ret = 0;
-
-  if (endianness) {
-    ret = (b1 << 8) + b2; // Big endian
-  } else {
-    ret = (b2 << 8) + b1; // Little endian
-  }
-
-  // Calculate whether or not to make number negative
-  var negative = ret >> 7;
-
-  // Remove sign bit
-  ret &= ~(1 << 15);
-
-  // Make number negative as determined above
-  if (negative) ret = -ret;
-
-  return ret;
 }
 })();
 ;/*

@@ -39,6 +39,7 @@ THREE.BlendLoader = function(manager, verbose) {
   this.version = "";       // Represents the version of Blender the file was made in
   this.compressed = false; // Is set to true if we encounter a compressed file
   this.valid = false;      // Set to true if the checkHeader function returns true
+  this.filePointer = 0;    // When reading a file, this moves around
 };
 
 // We extend THREE classes wherever possible to make our lives easier
