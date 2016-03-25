@@ -33,6 +33,9 @@ THREE.BlendLoader.prototype.parse = function(inData) {
   var success = this.parseHeader(responseView);
   if (!success) { this.cleanup(); return false; }
   
+  success = this.readFileBlocks();
+  if (!success) { this.cleanup(); return false; }
+
   success = this.parseSDNA(responseView);
   if (!success) { this.cleanup(); return false; }
 
@@ -43,10 +46,10 @@ THREE.BlendLoader.prototype.parse = function(inData) {
 THREE.BlendLoader.prototype.parseHeader = function(responseView) {
   if (this.verbose) console.log("Checking to see if the .blend is gzipped");
 
-  self.compressed = !checkHeader(responseView);
+  this.compressed = !checkHeader(responseView);
 
   // If the file is compressed, we decompress it here
-  if (self.compressed) {
+  if (this.compressed) {
     if (this.verbose) console.log(".blend is either invalid or compressed, attempting decompression");
 
     try {
@@ -107,6 +110,20 @@ THREE.BlendLoader.prototype.parseHeader = function(responseView) {
 
   // Fake us "moving the pointer around" as we read, because lazyness
   this.filePointer = 12;
+
+  return true;
+};
+
+// Called by parse to read in all of the file blocks into separate objects
+THREE.BlendLoader.prototype.readFileBlocks = function() {
+  while (this.filePointer < this.data.length) {
+    var header = this.blockHeader();
+    this.fileBlocks.push(header);
+    // Just skip data section for now
+    this.filePointer += header.count * header.size;
+  }
+
+  if (this.verbose) { console.log("Processed " + this.fileBlocks.length + " file blocks"); }
 
   return true;
 };

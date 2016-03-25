@@ -18,7 +18,7 @@ test("Compressed .blend", function(assert) {
   var loader = new THREE.BlendLoader;
 
   loader.load("cubeCompressed.blend", function(ldr){
-    assert.ok(!loader.compressed, ".blend identified as compressed");
+    assert.ok(loader.compressed, ".blend identified as compressed");
     assert.ok(typeof loader.data === "object", "Loader initialised data array");
     assert.ok(loader.data.length > 0, "Loader properly loaded data into array");
     assert.ok(loader.valid, "Loader successfully read the header fingerprint.");
