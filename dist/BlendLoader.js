@@ -109,8 +109,6 @@ THE SOFTWARE.
 // Wrap each fix in a separate self-calling function to eliminate problems with globals
 
 // Add support for TypedArray.prototype.slice in older-than-latest chrome builds
-// Almost an exact copy of this https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice
-// See "Streamining cross-browser behavior"
 (function(){
 "use strict";
 
@@ -141,6 +139,7 @@ function doVariant(variant) {
       // Actual expected size of the slice
       size = upTo - start;
 
+      // Process the slicing
       if (size > 0) {
         cloned = new this.constructor(size);
         if (this.charAt) {
