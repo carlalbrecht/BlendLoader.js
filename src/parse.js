@@ -117,9 +117,14 @@ THREE.BlendLoader.prototype.parseHeader = function(responseView) {
 // Called by parse to read in all of the file blocks into separate objects
 THREE.BlendLoader.prototype.readFileBlocks = function() {
   while (this.filePointer < this.data.length) {
+    // Obtain new header and fill out with specified block data
     var header = this.blockHeader();
+    header.data = this.data.slice(this.filePointer, header.count * header.size);
+    
+    // Add the block to the list
     this.fileBlocks.push(header);
-    // Just skip data section for now
+    
+    // Increment file pointer to end of current block
     this.filePointer += header.count * header.size;
   }
 
