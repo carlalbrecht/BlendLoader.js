@@ -317,7 +317,7 @@ THREE.BlendLoader.prototype.readFileBlocks = function() {
   while (this.filePointer < this.data.length) {
     // Obtain new header and fill out with specified block data
     var header = this.blockHeader();
-    header.data = this.data.slice(this.filePointer, header.count * header.size);
+    header.data = this.data.slice(this.filePointer, this.filePointer + header.count * header.size);
     
     // Add the block to the list
     this.fileBlocks.push(header);
